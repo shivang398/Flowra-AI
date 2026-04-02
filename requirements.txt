@@ -2,5 +2,6 @@ fastapi
 uvicorn
 scikit-learn
 joblib
+numpy
 pydantic
 python-jose
