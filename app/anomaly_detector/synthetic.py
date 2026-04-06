@@ -15,31 +15,46 @@ import numpy as np
 
 
 def generate_normal_traffic(
-    n_samples: int = 2000,
+    n_samples: int = 10000,
     seed: int = 42,
 ) -> np.ndarray:
-    """Return an (n_samples, 3) array of normal-traffic feature vectors.
+    """Return an (n_samples, 3) array of realistic normal-traffic feature vectors.
 
-    Feature columns
-    ---------------
-    0 — request_frequency : int-like
-        Requests per 10 s window.  Normal users: 1–6.
-    1 — average_interval : float
-        Mean seconds between requests.  Normal: 1.5–5.0 s.
-    2 — payload_bytes : int-like
-        Request body size.  Normal: 50–2 000 bytes.
-
-    Parameters
-    ----------
-    n_samples : int
-        Number of synthetic normal samples (default 2 000).
-    seed : int
-        Random seed for reproducibility.
+    Includes:
+    - Linear time-of-day modulation (higher frequency during "business" window)
+    - Session-like bursts (interval variability)
+    - Log-normal payload sizes (heavy-tailed)
     """
     rng = np.random.default_rng(seed)
-
-    frequency = rng.integers(low=1, high=7, size=n_samples).astype(float)
-    interval = rng.uniform(low=1.5, high=5.0, size=n_samples)
-    payload = rng.integers(low=50, high=2_000, size=n_samples).astype(float)
-
-    return np.column_stack([frequency, interval, payload])
+    
+    # 1. Frequency with time-of-day simulation
+    # Simple sine modulation over 'mock' 24h cycle
+    times = np.linspace(0, 2 * np.pi, n_samples)
+    modulation = (np.sin(times) + 1.2)  # Range ~0.2 to 2.2
+    
+    # Base frequency 1-4, modulated
+    frequency = (rng.integers(low=1, high=5, size=n_samples) * modulation).astype(float)
+    frequency = np.clip(frequency, 1, 10)  # Cap at 10 for normal
+    
+    # 2. Intervals (Session-like)
+    # Some users are fast (1-2s), some slow (5-10s), mix of both in distributions
+    fast_intervals = rng.uniform(low=0.8, high=2.5, size=n_samples // 2)
+    slow_intervals = rng.uniform(low=3.0, high=12.0, size=n_samples - (n_samples // 2))
+    interval = np.concatenate([fast_intervals, slow_intervals])
+    rng.shuffle(interval)
+    
+    # 3. Payloads (Log-Normal)
+    # Most requests are small (200-800B), but some are large (5KB+)
+    # Log-normal distribution captures this 'heavy-tail' perfectly
+    payload = rng.lognormal(mean=6.5, sigma=0.8, size=n_samples)
+    payload = np.clip(payload, 50, 15000) # clip to reasonable range
+    
+    # Add small amount of jitter/noise (1%)
+    frequency += rng.normal(0, 0.1, n_samples)
+    interval += rng.normal(0, 0.2, n_samples)
+    
+    return np.column_stack([
+        np.clip(frequency, 0, 15), 
+        np.clip(interval, 0.1, 20), 
+        payload
+    ])

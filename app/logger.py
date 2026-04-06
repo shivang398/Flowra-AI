@@ -23,6 +23,7 @@ def log_request(
     action: str,
     anomaly_score: Optional[float] = None,
     deviation_score: Optional[float] = None,
+    injection_score: Optional[float] = None,
     features: Optional[Dict[str, Any]] = None,
     reasoning: str = "N/A",
 ) -> None:
@@ -40,6 +41,8 @@ def log_request(
         ML anomaly detection score.
     deviation_score : float | None
         Behavioral fingerprinting deviation score.
+    injection_score : float | None
+        Prompt injection detection score.
     features : dict | None
         Raw behavioral features (frequency, interval, etc.).
     reasoning : str
@@ -56,6 +59,7 @@ def log_request(
         "signals": {
             "anomaly_score": round(anomaly_score, 4) if anomaly_score is not None else 0.0,
             "deviation_score": round(deviation_score, 4) if deviation_score is not None else 0.0,
+            "injection_score": round(injection_score, 4) if injection_score is not None else 0.0,
         },
         "features": features or {},
     }

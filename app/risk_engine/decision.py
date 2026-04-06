@@ -70,23 +70,23 @@ class HeuristicDecisionEngine(BaseDecisionEngine):
         if agg_score >= self._block:
             return "block", f"Security: Aggregated risk score {agg_score:.2f} exceeds safety threshold"
 
-        # Rule 3: Extreme Burst (Hard Limit)
+        # Rule 6: Extreme Burst (Hard Limit)
         if frequency > 0.95:
-            return "block", "Abuse: Extreme request frequency detected (Hard Limit)"
+            return "rate_limit", "Abuse: Extreme request frequency detected (Hard Limit)"
 
         # ------------------------------------------------------------------
         # THROTTLE RULES
         # ------------------------------------------------------------------
 
-        # Rule 4: Suspicious behavior (Medium ML confidence)
+        # Rule 7: Suspicious behavior (Medium ML confidence)
         if anomaly > 0.7:
             return "throttle", f"Warning: Infrastructure anomaly detected (score={anomaly:.2f})"
 
-        # Rule 5: Personal behavior shift
+        # Rule 8: Personal behavior shift
         if deviation > 0.7:
             return "throttle", f"Warning: Current behavior deviates significantly from baseline (score={deviation:.2f})"
 
-        # Rule 6: General Throttle Threshold
+        # Rule 9: General Throttle Threshold
         if agg_score >= self._throttle:
             return "throttle", f"Caution: Elevated aggregated risk score {agg_score:.2f}"
 

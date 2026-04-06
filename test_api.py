@@ -121,7 +121,8 @@ try:
     else:
         fail("POST /secure-predict unexpected status", f"{r.status_code}: {r.text[:120]}")
 except Exception as e:
-    fail("POST /secure-predict failed", str(e))
+    import traceback
+    fail("POST /secure-predict failed", f"{str(e)}\n{traceback.format_exc()}")
 
 # ──────────────────────────────────────────────────────────────
 section("TEST 7 — Behavioral escalation (spam → throttle/block)")
@@ -140,6 +141,8 @@ for i in range(20):
             action = r.json().get("action", "?")
             anomaly = r.json().get("anomaly_score", "?")
             actions.append(action)
+        elif r.status_code == 429:
+            actions.append("rate_limit(429)")
         elif r.status_code == 403:
             actions.append("block(403)")
         else:
@@ -153,8 +156,8 @@ for a in actions:
 
 print(f"  Action summary over 20 requests: {action_summary}")
 
-if "block(403)" in actions or "throttle" in actions:
-    ok("Behavioral escalation detected — system transitioned to throttle/block")
+if "block(403)" in actions or "throttle" in actions or "rate_limit(429)" in actions:
+    ok("Behavioral escalation detected — system transitioned to throttle/block/rate_limit")
 elif "allow" in actions:
     ok("All requests allowed (risk engine needs more baseline data)", f"{action_summary}")
 else:

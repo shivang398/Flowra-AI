@@ -49,14 +49,16 @@ class AnomalyDetector:
 
     def __init__(
         self,
-        contamination: float = 0.01,
+        contamination: float = 0.05,
         threshold: float = 0.65,
-        n_estimators: int = 150,
+        n_estimators: int = 200,
+        warmup_steps: int = 50,
         model_path: str | Path | None = None,
     ) -> None:
         self._contamination = contamination
         self._threshold = threshold
         self._n_estimators = n_estimators
+        self._warmup_steps = warmup_steps
         self._model_path = Path(model_path) if model_path else _DEFAULT_MODEL_PATH
         self._model: IsolationForest | None = None
 
@@ -75,7 +77,7 @@ class AnomalyDetector:
     def train(
         self,
         X: np.ndarray | None = None,
-        n_samples: int = 2000,
+        n_samples: int = 10000,
         seed: int = 42,
         persist: bool = True,
     ) -> None:
@@ -119,42 +121,43 @@ class AnomalyDetector:
         if persist:
             self.save()
 
-    def predict(self, features) -> AnomalyResult:
+    def predict(self, features, request_count: int = 100) -> AnomalyResult:
         """Score a single request.
 
         Parameters
         ----------
         features : BehaviorFeatures | dict | list | ndarray
-            Accepts any of:
-            - A :class:`BehaviorFeatures` instance (reads the 3 fields).
-            - A dict with keys matching :attr:`FEATURE_NAMES`.
-            - A flat list/array of 3 floats in feature order.
-
-        Returns
-        -------
-        AnomalyResult
-            ``anomaly_score`` in [0, 1], ``is_anomalous`` flag, ``raw_score``.
+            Input features.
+        request_count : int
+            Number of previous requests from this IP (for warm-up logic).
         """
         if self._model is None:
-            raise RuntimeError("AnomalyDetector is not trained — call train() or load() first")
+            raise RuntimeError("AnomalyDetector is not trained")
 
         vec = self._to_vector(features)
         raw = float(self._model.decision_function(vec.reshape(1, -1))[0])
 
-        # Normalise: IsolationForest returns positive for inliers,
-        # negative for outliers.  We invert and scale to [0, 1]
-        # where 1 = most anomalous.
+        # 1. Normalise to [0, 1]
         score_range = self._score_max - self._score_min
-        if score_range == 0:
-            norm = 0.0
-        else:
-            # Invert: lower raw → higher anomaly score
-            norm = 1.0 - (raw - self._score_min) / score_range
-
+        norm = 1.0 - (raw - self._score_min) / max(1e-6, score_range)
         norm = max(0.0, min(1.0, norm))
+
+        # 2. Warm-up Logic
+        # New IPs (low request_count) get a 'grace' reduction in anomaly score
+        # to prevent false positives during baseline building.
+        if request_count < self._warmup_steps:
+            warmup_factor = request_count / self._warmup_steps
+            norm *= warmup_factor
+
+        # 3. Confidence Scoring
+        # Confidence is higher the further we are from the boundary (threshold).
+        # Near the threshold ([threshold-0.1, threshold+0.1]), confidence is low.
+        dist_from_threshold = abs(norm - self._threshold)
+        confidence = min(1.0, dist_from_threshold * 5.0) # Reach max confidence at 0.2 distance
 
         return AnomalyResult(
             anomaly_score=norm,
+            confidence=confidence,
             is_anomalous=norm >= self._threshold,
             raw_score=raw,
         )

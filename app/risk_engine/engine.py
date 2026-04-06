@@ -83,11 +83,15 @@ class RiskEngine:
         fingerprint = self._fingerprint.update_and_get(ctx["ip"], features)
 
         # 3. Enrich context for signals
+        timestamps = self._extractor.store.get_timestamps(ctx["ip"])
+        request_count = len(timestamps)
+
         enriched = {
             **ctx,
             "timestamp": ts,
             "features": features,
             "fingerprint": fingerprint,
+            "request_count": request_count,
         }
 
         # --- Signal evaluation ---

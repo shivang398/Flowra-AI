@@ -37,7 +37,8 @@ class AnomalySignal(BaseSignal):
 
     def evaluate(self, ctx: dict) -> SignalResult:
         features = ctx["features"]  # BehaviorFeatures from FeatureExtractor
-        result = self._detector.predict(features)
+        request_count = ctx.get("request_count", 100)
+        result = self._detector.predict(features, request_count=request_count)
 
         return SignalResult(
             name=self.name,
