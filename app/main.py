@@ -17,7 +17,17 @@ from app.risk_engine.signals import AnomalySignal, FingerprintSignal
 
 logging.basicConfig(level=logging.INFO)
 
+from fastapi.middleware.cors import CORSMiddleware
+
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 import os
 from app.feature_extractor.store import RedisStore
@@ -65,6 +75,16 @@ class InputData(BaseModel):
 def root():
     return {"message": "SentinelAI running 🚀"}
 
+@app.get("/token")
+def generate_test_token():
+    """Generates a test token ONLY for dashboard demo purposes."""
+    from app.auth import SECRET_KEY, ALGORITHM
+    from jose import jwt
+    import time
+    payload = {"user": "demo_user", "exp": int(time.time()) + 3600}
+    token = jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
+    return {"access_token": token, "token_type": "bearer"}
+
 
 @app.post("/predict")
 async def basic_predict(
@@ -98,6 +118,7 @@ async def basic_predict(
 
     # 3. Model Inference
     result = predict(input.data)
+    latency = time.time() - start
 
     # 4. Logging
     log_request(
@@ -113,7 +134,7 @@ async def basic_predict(
     return {
         "prediction": result,
         **verdict.to_dict(),
-        "latency": latency,
+        "latency": round(latency, 4),
     }
 
 
