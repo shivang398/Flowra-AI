@@ -31,3 +31,26 @@ class InMemoryFingerprintStore(BaseFingerprintStore):
 
     def set(self, ip: str, baseline: FingerprintBaseline) -> None:
         self._data[ip] = baseline
+
+
+class RedisFingerprintStore(BaseFingerprintStore):
+    """Redis-backed baseline store for distributed deployments."""
+
+    def __init__(self, redis_url: str = "redis://localhost:6379/0") -> None:
+        import redis
+        self._client = redis.Redis.from_url(redis_url, decode_responses=True)
+        self._prefix = "fingerprint_store:"
+
+    def get(self, ip: str) -> FingerprintBaseline:
+        import json
+        key = f"{self._prefix}{ip}"
+        data = self._client.get(key)
+        if data:
+            return FingerprintBaseline(**json.loads(data))
+        return FingerprintBaseline()
+
+    def set(self, ip: str, baseline: FingerprintBaseline) -> None:
+        import json
+        from dataclasses import asdict
+        key = f"{self._prefix}{ip}"
+        self._client.set(key, json.dumps(asdict(baseline)))

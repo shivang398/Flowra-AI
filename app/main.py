@@ -19,9 +19,25 @@ logging.basicConfig(level=logging.INFO)
 
 app = FastAPI()
 
+import os
+from app.feature_extractor.store import RedisStore
+from app.fingerprint.store import RedisFingerprintStore
+
 # --- Shared engines (swap InMemoryStores → RedisStores for distributed) ---
-feature_extractor = FeatureExtractor(window_sec=10.0)
-fingerprint_engine = FingerprintEngine(min_samples=5)
+USE_REDIS = os.environ.get("USE_REDIS", "false").lower() == "true"
+REDIS_URL = os.environ.get("REDIS_URL", "redis://localhost:6379/0")
+
+if USE_REDIS:
+    logging.info(f"Using Redis stores at {REDIS_URL}")
+    feature_store = RedisStore(redis_url=REDIS_URL)
+    fingerprint_store = RedisFingerprintStore(redis_url=REDIS_URL)
+else:
+    logging.info("Using InMemory stores")
+    feature_store = None
+    fingerprint_store = None
+
+feature_extractor = FeatureExtractor(store=feature_store, window_sec=10.0)
+fingerprint_engine = FingerprintEngine(store=fingerprint_store, min_samples=5)
 decision_engine = HeuristicDecisionEngine(throttle_threshold=0.3, block_threshold=0.7)
 
 # --- ML Anomaly detector ---

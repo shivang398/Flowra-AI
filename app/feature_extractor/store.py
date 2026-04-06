@@ -66,3 +66,26 @@ class InMemoryStore(BaseStore):
             self._data.clear()
         else:
             self._data.pop(ip, None)
+
+
+class RedisStore(BaseStore):
+    """Redis-backed store for distributed deployments."""
+
+    def __init__(self, redis_url: str = "redis://localhost:6379/0") -> None:
+        import redis
+        self._client = redis.Redis.from_url(redis_url, decode_responses=True)
+        self._prefix = "feature_store:"
+
+    def append(self, ip: str, timestamp: float) -> None:
+        key = f"{self._prefix}{ip}"
+        self._client.zadd(key, {str(timestamp): timestamp})
+
+    def prune(self, ip: str, cutoff: float) -> None:
+        key = f"{self._prefix}{ip}"
+        self._client.zremrangebyscore(key, "-inf", cutoff)
+
+    def get_timestamps(self, ip: str) -> list[float]:
+        key = f"{self._prefix}{ip}"
+        results = self._client.zrange(key, 0, -1)
+        return [float(x) for x in results]
+
