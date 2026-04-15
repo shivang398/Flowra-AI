@@ -1,306 +1,131 @@
-# 🌊 Flowra AI — Adaptive Security & Alignment Layer for AI Systems
+# 🛡️ Flowra AI — Adaptive Security & Alignment Layer for AI Systems
 
-Flowra AI is a real-time, behavior-aware security and control layer for AI inference systems. It combines anomaly detection, behavioral fingerprinting, and adaptive decision-making to protect AI APIs from abuse while maintaining performance and efficiency.
+ Flowra AI is a real-time, behavior-aware security and control layer for AI inference systems. It combines unsupervised anomaly detection, behavioral fingerprinting, natural language prompt injection checks, and a live reinforcement-learning feedback loop to protect AI APIs from abuse while maintaining performance and efficiency.
 
 ---
 
-# 🚀 Overview
+## 🚀 Overview
 
 Modern AI APIs face critical challenges:
+- 🚨 **API abuse and request flooding**
+- 💸 **Increased operational cost**
+- ⚠️ **Performance degradation under load**
+- 🤖 **Prompt injection and jailbreaks from malicious actors**
 
-* 🚨 API abuse and request flooding
-* 💸 Increased operational cost
-* ⚠️ Performance degradation under load
-* 🤖 Intelligent bots mimicking real users
-
-Flowra AI introduces an **adaptive intelligence layer** that learns user behavior and dynamically controls system usage in real time.
-
----
-
-# 🚨 Problem Statement
-
-Traditional API protection systems:
-
-* rely on **static rate limiting**
-* lack **behavioral awareness**
-* cannot adapt to evolving traffic patterns
-
-This leads to:
-
-* poor detection accuracy
-* high false positives
-* inefficient system performance
+Sentinel AI introduces an **adaptive intelligence layer** that learns user behavior and dynamically controls system usage in real time, securely bridging the gap between raw ML inference and production availability.
 
 ---
 
-# 💡 Solution
-
-> Flowra AI provides a unified system that analyzes user behavior, detects anomalies, and dynamically regulates API usage using machine learning and adaptive control strategies.
-
----
-
-# 🧩 System Architecture
-
-![Image](https://www.researchgate.net/profile/Sreeraj-Rajendran/publication/332455139/figure/fig2/AS%3A810239309934593%401570187513806/Model-architecture-for-anomaly-detection.png)
-
-![Image](https://miro.medium.com/1%2AMx23HqrqsJJgIRalBNESKQ.png)
-
-![Image](https://ars.els-cdn.com/content/image/1-s2.0-S0167404823004200-gr001.jpg)
-
-![Image](https://www.researchgate.net/publication/323971244/figure/fig3/AS%3A607456518492165%401521840328608/Architecture-of-the-anomaly-detection-service.png)
-
-### 🔍 Flow
+## 🧩 System Architecture
 
 ```text
-User → Auth → Feature Extraction → Fingerprinting → Anomaly Detection → Decision → Inference → Logging
-                                ↑
-                           Feedback Loop (Future RL)
+User → Auth → Feature Extraction → Fingerprinting → Injection Scan → Anomaly Detection → Decision → Inference
+                                                                                           |
+                                              Interactive UI Dashboard ← Structured Logs ← ┘
+                                                       |
+          Persistent Redis Bayesian Tuning Thresholds ←┘
 ```
 
 ---
 
-# 🧠 Core Components
+## 🧠 Core Security Layers
 
-## 1️⃣ Inference Engine
+### 1️⃣ Behavioral Fingerprinting 🧬
+Builds mathematical, user-specific profiles mapping exact request speeds and payload sizes over time, seamlessly matching current payloads against historical context saved in **Redis** cache.
 
-* FastAPI-based API
-* ML model prediction (scikit-learn)
+### 2️⃣ Anomaly Detection 🧠
+Trains a synthetic `IsolationForest` (unsupervised ML) parameter space over expected traffic distributions to flag entirely unheard-of traffic patterns instantly.
 
----
+### 3️⃣ LLM Prompt Injection Detection 🛡️
+Utilizes rigorous Regex filtering coupled inherently with a zero-temperature **OpenAI API** semantic check. Safe from outages due to native architectural uncertainty fallbacks (`LLM_API_OFFLINE_UNCERTAIN`).
 
-## 2️⃣ Authentication Layer
-
-* JWT-based secure access
-* request validation
-
----
-
-## 3️⃣ Feature Extraction
-
-Extracts behavioral features:
-
-* request frequency
-* time between requests
-* payload size
+### 4️⃣ The Bayesian Decision Engine 🚦
+Aggregates all four distinct threat vectors contextually, rather than rigidly. Maps the final security confidence score to a live tuning threshold yielding:
+* 🟢 **Allow** → Executes inference securely.
+* 🟡 **Throttle** → Introduces artificial Token-Bucket delays.
+* 🔴 **Block** → Hard rejects and caches IP to block registries.
 
 ---
 
-## 4️⃣ Behavioral Fingerprinting 🧬
+## 📊 Live Observability & Reinforcement
 
-* builds user-specific behavior profiles
-* tracks patterns over time
-* enables personalized anomaly detection
-
----
-
-## 5️⃣ Anomaly Detection 🧠
-
-* Isolation Forest (unsupervised ML)
-* detects abnormal behavior in real time
+Sentinel AI doesn't just passively read logs. It implements a fully automated tuning feedback loop explicitly tailored to its traffic.
+- **The Dashboard:** Visit `GET /dashboard` to render a modern Tailwind/Chart.js user interface parsing AI decisions in real-time.
+- **The Reinforcement Loop:** Administrators can explicitly correct the API's decisions via one-click **Valid Action** or **False Pos** buttons natively inside the dashboard log trail. 
+- **Learning Retained:** Modifying the rules structurally pushes Bayesian nudges out to your persistence engine (`Redis`), guaranteeing that the exact AI strictness thresholds scale seamlessly without wiping on container restages.
 
 ---
 
-## 6️⃣ Decision Engine 🚦
+## 🛠️ Tech Stack & Structure
 
-Dynamic response system:
-
-* 🟢 Allow → normal usage
-* 🟡 Throttle → suspicious behavior
-* 🔴 Block → malicious activity
-
----
-
-## 7️⃣ Logging & Monitoring 📊
-
-Tracks:
-
-* latency
-* anomaly score
-* system actions
+Sentinel AI reflects an enterprise-grade architectural layout:
+* **Backend:** FastAPI (Modular routes and scoped domain engines)
+* **ML Engines:** scikit-learn (`app/ml/`, `IsolationForest`)
+* **Persistence:** Redis (`docker-compose` deployed)
+* **Observability:** Jinja2, TailwindCSS, Chart.js
+* **Testing:** Pytest native environment (`tests/`)
 
 ---
 
-## 8️⃣ Reinforcement Learning Layer 🤖 (Extension)
+## 📦 Installation & Deployment
 
-Flowra AI is designed to evolve into a learning-based system:
-
-* learns optimal actions from system feedback
-* adapts decision policies over time
-
-### RL Formulation
-
-| Element | Description                     |
-| ------- | ------------------------------- |
-| State   | user behavior + fingerprint     |
-| Action  | allow / throttle / block        |
-| Reward  | performance, cost, and security |
-| Policy  | decision strategy               |
-
----
-
-# ⚙️ How It Works
-
-1. User sends API request
-2. JWT authentication is verified
-3. Behavioral features are extracted
-4. User fingerprint is updated
-5. Anomaly score is computed
-6. Decision engine selects action
-7. Model inference runs (if allowed)
-8. Metrics are logged
-9. (Future) RL updates decision policy
-
----
-
-# 🔥 Features
-
-* ⚡ Real-time AI inference API
-* 🧠 ML-based anomaly detection
-* 🧬 Behavioral fingerprinting
-* 🔐 Secure authentication
-* 🚦 Adaptive rate limiting
-* 🤖 RL-ready decision system
-* 📊 Performance monitoring
-
----
-
-# 🛠️ Tech Stack
-
-* **Backend:** FastAPI
-* **ML Models:** scikit-learn
-* **Authentication:** JWT (python-jose)
-* **Data Handling:** NumPy
-* **Logging:** JSON
-
----
-
-# 📦 Installation
+Deploying Sentinel AI leverages internal `docker-compose` logic to establish both the core Python engine and Redis memory instances seamlessly.
 
 ```bash
-git clone https://github.com/your-username/flowra-ai.git
-cd flowra-ai
-pip install -r requirements.txt
+git clone https://github.com/your-username/sentinel-ai.git
+cd sentinel-ai
+
+# Set your environmental keys securely
+cp .env.example .env
+# Edit .env with your OPENAI_API_KEY and a SENTINEL_ADMIN_KEY
+
+# Spin up the infrastructure
+docker-compose up -d
 ```
+
+> If testing locally without Docker:
+> ```bash
+> pip install -r requirements.txt
+> uvicorn app.main:app --reload
+> ```
 
 ---
 
-# ▶️ Run the Project
+## 📡 Usage
+
+### 1. Request a Token
+```bash
+curl -X GET "http://127.0.0.1:8000/token"
+# Copies demo JWT
+```
+
+### 2. Post an Inference
+```bash
+curl -X POST "http://127.0.0.1:8000/secure-predict" \
+     -H "Authorization: Bearer <your_token>" \
+     -H "Content-Type: application/json" \
+     -d '{"data": [5.1, 3.5, 1.4, 0.2]}'
+```
+
+### 3. Open the Dashboard
+Navigate your browser directly to:
+**http://127.0.0.1:8000/dashboard**
+
+---
+
+## 🧪 Testing Suite Coverage
+
+We utilize a comprehensive, module-extracted testing framework natively hooking into the FastAPI `TestClient`. Over 14 test vectors check token-absences, ML isolation metrics, and API bounds seamlessly.
 
 ```bash
-python train_model.py
-uvicorn app.main:app --reload
-```
-
-Open:
-http://127.0.0.1:8000/docs
-
----
-
-# 🔐 Authentication
-
-```python
-from jose import jwt
-print(jwt.encode({"user": "test"}, "supersecret", algorithm="HS256"))
-```
-
-Use:
-
-```text
-Bearer <your_token>
+# From the root directory:
+pytest tests/ -v
 ```
 
 ---
 
-# 📡 API Endpoint
+## ⚖️ Toward AI Alignment
 
-## POST /predict
-
-### Request:
-
-```json
-{
-  "data": [5.1, 3.5, 1.4, 0.2]
-}
-```
-
-### Response:
-
-```json
-{
-  "prediction": [0],
-  "risk_score": 0.12,
-  "action": "allow",
-  "latency": 0.002
-}
-```
-
----
-
-# 📊 Metrics Tracked
-
-* latency
-* request frequency
-* anomaly score
-* system actions
-
----
-
-# 🧪 Testing Scenarios
-
-| Scenario    | Behavior         | Output   |
-| ----------- | ---------------- | -------- |
-| Normal user | Low frequency    | Allow    |
-| Suspicious  | Medium frequency | Throttle |
-| Attack      | High frequency   | Block    |
-
----
-
-# 🧠 Research Perspective
-
-Flowra AI explores:
-
-* adaptive rate limiting
-* anomaly detection using ML
-* behavioral fingerprinting
-* reinforcement learning–based control systems
-
----
-
-# 🏆 Key Contribution
-
-> A unified adaptive system integrating inference, behavioral intelligence, and anomaly detection for real-time AI API protection.
-
----
-
-# ⚖️ Toward AI Alignment
-
-Flowra AI contributes to **system-level AI alignment** by:
-
-* enforcing safe system behavior
-* balancing performance, cost, and security
-* enabling adaptive decision-making
-
----
-
-# 💼 Use Cases
-
-* AI API protection
-* SaaS platforms
-* cloud inference systems
-* fraud detection
-* cost optimization
-
----
-
-# 🚀 Summary
-
-Flowra AI is a **self-monitoring, adaptive AI system** that:
-
-* understands user behavior
-* detects anomalies
-* dynamically controls system usage
-* evolves toward intelligent decision-making
-
----
+Sentinel AI contributes to **system-level AI alignment** by enforcing safe system behavior, halting prompt-injection models before executing expensive compute pipelines, and permitting explicitly guided Reinforcement Learning bounds tailored strictly to authentic traffic streams.
 
 ⭐ Star this repo if you found it useful!
