@@ -1,6 +1,6 @@
 # 🛡️ Flowra AI — Adaptive Security & Alignment Layer for AI Systems
 
- Flowra AI is a real-time, behavior-aware security and control layer for AI inference systems. It combines unsupervised anomaly detection, behavioral fingerprinting, natural language prompt injection checks, and a live reinforcement-learning feedback loop to protect AI APIs from abuse while maintaining performance and efficiency.
+Flowra AI (formerly Flowra AI) is a real-time, behavior-aware security and control layer for AI inference systems. It combines unsupervised anomaly detection, behavioral fingerprinting, natural language prompt injection checks, and a live reinforcement-learning feedback loop to protect AI APIs from abuse while maintaining performance and efficiency.
 
 ---
 
@@ -12,7 +12,7 @@ Modern AI APIs face critical challenges:
 - ⚠️ **Performance degradation under load**
 - 🤖 **Prompt injection and jailbreaks from malicious actors**
 
-Sentinel AI introduces an **adaptive intelligence layer** that learns user behavior and dynamically controls system usage in real time, securely bridging the gap between raw ML inference and production availability.
+Flowra AI introduces an **adaptive intelligence layer** that learns user behavior and dynamically controls system usage in real time, securely bridging the gap between raw ML inference and production availability.
 
 ---
 
@@ -49,7 +49,7 @@ Aggregates all four distinct threat vectors contextually, rather than rigidly. M
 
 ## 📊 Live Observability & Reinforcement
 
-Sentinel AI doesn't just passively read logs. It implements a fully automated tuning feedback loop explicitly tailored to its traffic.
+Flowra AI doesn't just passively read logs. It implements a fully automated tuning feedback loop explicitly tailored to its traffic.
 - **The Dashboard:** Visit `GET /dashboard` to render a modern Tailwind/Chart.js user interface parsing AI decisions in real-time.
 - **The Reinforcement Loop:** Administrators can explicitly correct the API's decisions via one-click **Valid Action** or **False Pos** buttons natively inside the dashboard log trail. 
 - **Learning Retained:** Modifying the rules structurally pushes Bayesian nudges out to your persistence engine (`Redis`), guaranteeing that the exact AI strictness thresholds scale seamlessly without wiping on container restages.
@@ -58,7 +58,7 @@ Sentinel AI doesn't just passively read logs. It implements a fully automated tu
 
 ## 🛠️ Tech Stack & Structure
 
-Sentinel AI reflects an enterprise-grade architectural layout:
+Flowra AI reflects an enterprise-grade architectural layout:
 * **Backend:** FastAPI (Modular routes and scoped domain engines)
 * **ML Engines:** scikit-learn (`app/ml/`, `IsolationForest`)
 * **Persistence:** Redis (`docker-compose` deployed)
@@ -69,15 +69,15 @@ Sentinel AI reflects an enterprise-grade architectural layout:
 
 ## 📦 Installation & Deployment
 
-Deploying Sentinel AI leverages internal `docker-compose` logic to establish both the core Python engine and Redis memory instances seamlessly.
+Deploying Flowra AI leverages internal `docker-compose` logic to establish both the core Python engine and Redis memory instances seamlessly.
 
 ```bash
-git clone https://github.com/your-username/sentinel-ai.git
-cd sentinel-ai
+git clone https://github.com/shivang398/Flowra-AI.git
+cd Flowra-AI
 
 # Set your environmental keys securely
 cp .env.example .env
-# Edit .env with your OPENAI_API_KEY and a SENTINEL_ADMIN_KEY
+# Edit .env with your OPENAI_API_KEY and a FLOWRA_AI_ADMIN_KEY
 
 # Spin up the infrastructure
 docker-compose up -d
@@ -126,6 +126,6 @@ pytest tests/ -v
 
 ## ⚖️ Toward AI Alignment
 
-Sentinel AI contributes to **system-level AI alignment** by enforcing safe system behavior, halting prompt-injection models before executing expensive compute pipelines, and permitting explicitly guided Reinforcement Learning bounds tailored strictly to authentic traffic streams.
+Flowra AI contributes to **system-level AI alignment** by enforcing safe system behavior, halting prompt-injection models before executing expensive compute pipelines, and permitting explicitly guided Reinforcement Learning bounds tailored strictly to authentic traffic streams.
 
 ⭐ Star this repo if you found it useful!
