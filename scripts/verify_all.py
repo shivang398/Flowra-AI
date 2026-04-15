@@ -10,14 +10,14 @@ JWT_SECRET = "test_secret_32_chars_long_minimum_security"
 ADMIN_KEY = "admin_test_key"
 
 def setup_env():
-    os.environ["SENTINEL_JWT_SECRET"] = JWT_SECRET
-    os.environ["SENTINEL_ADMIN_KEY"] = ADMIN_KEY
+    os.environ["FLOWRA_JWT_SECRET"] = JWT_SECRET
+    os.environ["FLOWRA_ADMIN_KEY"] = ADMIN_KEY
     os.environ["USE_REDIS"] = "false"
     os.environ["BLOCK_TTL_RATE_LIMIT"] = "5"
     os.environ["BLOCK_TTL_RISK"] = "5"
 
 def start_server():
-    print("🚀 Starting SentinelAI server...")
+    print("🚀 Starting FlowraAI server...")
     proc = subprocess.Popen(
         ["uvicorn", "app.main:app", "--host", "127.0.0.1", "--port", "8000"],
         env=os.environ,

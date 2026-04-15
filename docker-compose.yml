@@ -1,7 +1,7 @@
 version: '3.8'
 
 services:
-  sentinel-api:
+  flowra-api:
     build:
       context: .
       dockerfile: Dockerfile
@@ -10,8 +10,8 @@ services:
     environment:
       - USE_REDIS=true
       - REDIS_URL=redis://redis:6379/0
-      - SENTINEL_JWT_SECRET=supersecret  # Change this in production
-      - SENTINEL_ADMIN_KEY=admin123
+      - FLOWRA_JWT_SECRET=supersecret  # Change this in production
+      - FLOWRA_ADMIN_KEY=admin123
       - OPENAI_API_KEY=${OPENAI_API_KEY:-}
     depends_on:
       - redis

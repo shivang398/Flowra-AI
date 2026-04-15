@@ -1,4 +1,4 @@
-"""Intelligent Decision Engine for SentinelAI.
+"""Intelligent Decision Engine for FlowraAI.
 
 Decouples from simple threshold-based scoring to provide a more
 sophisticated and explainable risk-action matrix.
@@ -58,8 +58,8 @@ class HeuristicDecisionEngine(BaseDecisionEngine):
         if self._redis:
             import redis
             try:
-                t = self._redis.get("sentinel:thresholds:throttle")
-                b = self._redis.get("sentinel:thresholds:block")
+                t = self._redis.get("flowra:thresholds:throttle")
+                b = self._redis.get("flowra:thresholds:block")
                 if t: self._throttle = float(t)
                 if b: self._block = float(b)
             except redis.RedisError:
@@ -83,8 +83,8 @@ class HeuristicDecisionEngine(BaseDecisionEngine):
         if self._redis:
             import redis
             try:
-                self._redis.set("sentinel:thresholds:throttle", str(self._throttle))
-                self._redis.set("sentinel:thresholds:block", str(self._block))
+                self._redis.set("flowra:thresholds:throttle", str(self._throttle))
+                self._redis.set("flowra:thresholds:block", str(self._block))
             except redis.RedisError:
                 pass
             

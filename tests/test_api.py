@@ -1,14 +1,14 @@
 import pytest
 from fastapi.testclient import TestClient
 from app.main import app
-from app.config import settings
+from app.core.config import settings
 
 client = TestClient(app)
 
 @pytest.fixture(autouse=True)
 def setup_env():
     # Make sure we have a secret key for tests
-    settings.sentinel_jwt_secret = "test_super_secret_for_pytest"
+    settings.flowra_jwt_secret = "test_super_secret_for_pytest"
 
 @pytest.fixture
 def auth_token():
@@ -23,7 +23,7 @@ def auth_headers(auth_token):
 def test_health_check():
     response = client.get("/")
     assert response.status_code == 200
-    assert "SentinelAI running" in response.json()["message"]
+    assert "FlowraAI running" in response.json()["message"]
 
 def test_no_auth_rejected():
     response = client.post("/secure-predict", json={"data": [1.0, 2.0, 3.0, 4.0]})

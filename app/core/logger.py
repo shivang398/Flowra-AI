@@ -1,4 +1,4 @@
-"""Structured JSON logging for SentinelAI requests and security signals.
+"""Structured JSON logging for FlowraAI requests and security signals.
 
 Aggregates behavioral features, ML scores, and decision reasoning into
 a machine-readable format ready for ELK/Dashboard ingestion.

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sentinel AI - Security Dashboard</title>
+    <title>Flowra AI - Security Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -146,11 +146,11 @@
         }
 
         async function submitFeedback(ip, verdict, was_correct) {
-            let adminKey = sessionStorage.getItem("sentinel_admin_key");
+            let adminKey = sessionStorage.getItem("flowra_admin_key");
             if (!adminKey) {
                 adminKey = prompt("Admin authentication required.\nEnter Admin Key:");
                 if (!adminKey) return;
-                sessionStorage.setItem("sentinel_admin_key", adminKey);
+                sessionStorage.setItem("flowra_admin_key", adminKey);
             }
 
             try {
@@ -164,7 +164,7 @@
                 });
                 
                 if (response.status === 401) {
-                    sessionStorage.removeItem("sentinel_admin_key");
+                    sessionStorage.removeItem("flowra_admin_key");
                     alert("Invalid admin key. Please try again.");
                     return;
                 }

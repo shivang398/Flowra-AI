@@ -5,9 +5,9 @@ import time
 from fastapi import FastAPI, Request, Depends, HTTPException
 from pydantic import BaseModel
 
-from app.auth import verify_token
-from app.model import predict
-from app.logger import log_request
+from app.core.auth import verify_token
+from app.ml.inference import predict
+from app.core.logger import log_request
 from app.feature_extractor import FeatureExtractor
 from app.fingerprint import FingerprintEngine
 from app.anomaly_detector import AnomalyDetector
@@ -30,11 +30,11 @@ app.add_middleware(
 )
 
 import os
-from app.config import settings
+from app.core.config import settings
 from app.feature_extractor.store import RedisStore
 from app.fingerprint.store import RedisFingerprintStore
-from app.rate_limiter import rate_enforcer
-from app.appeal import whitelist_manager, appeal_store, block_registry, AppealRequest
+from app.services.rate_limiter import rate_enforcer
+from app.services.appeal import whitelist_manager, appeal_store, block_registry, AppealRequest
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 
@@ -86,27 +86,27 @@ class InputData(BaseModel):
 
 @app.on_event("startup")
 async def startup_event():
-    if not settings.sentinel_jwt_secret:
-        logging.critical("CRITICAL: SENTINEL_JWT_SECRET is not set. Exiting.")
-        raise RuntimeError("SENTINEL_JWT_SECRET is not set")
-    logging.info("SentinelAI security configuration validated.")
+    if not settings.flowra_jwt_secret:
+        logging.critical("CRITICAL: FLOWRA_JWT_SECRET is not set. Exiting.")
+        raise RuntimeError("FLOWRA_JWT_SECRET is not set")
+    logging.info("FlowraAI security configuration validated.")
 
 @app.get("/")
 def root():
-    return {"message": "SentinelAI running 🚀"}
+    return {"message": "FlowraAI running 🚀"}
 
 @app.get("/token")
 def generate_test_token():
     """Generates a test token ONLY for dashboard demo purposes."""
-    from app.auth import ALGORITHM
+    from app.core.auth import ALGORITHM
     from jose import jwt
     import time
     
-    if not settings.sentinel_jwt_secret:
+    if not settings.flowra_jwt_secret:
          raise HTTPException(status_code=500, detail="JWT SECRET_KEY not configured")
          
     payload = {"user": "demo_user", "exp": int(time.time()) + 3600}
-    token = jwt.encode(payload, settings.sentinel_jwt_secret, algorithm=ALGORITHM)
+    token = jwt.encode(payload, settings.flowra_jwt_secret, algorithm=ALGORITHM)
     return {"access_token": token, "token_type": "bearer"}
 
 
@@ -322,7 +322,7 @@ from fastapi import Header
 import uuid
 
 def verify_admin(x_admin_key: str = Header(None)):
-    admin_key = settings.sentinel_admin_key
+    admin_key = settings.flowra_admin_key
     if not admin_key or x_admin_key != admin_key:
         raise HTTPException(status_code=401, detail="Invalid admin key")
 
@@ -393,7 +393,7 @@ async def get_dashboard(request: Request):
 async def get_logs():
     """Retrieve structured logs for the dashboard."""
     import json
-    from app.logger import LOG_FILE
+    from app.core.logger import LOG_FILE
     logs = []
     try:
         with open(LOG_FILE, "r") as f:

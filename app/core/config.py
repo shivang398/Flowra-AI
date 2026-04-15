@@ -11,8 +11,8 @@ class Settings(BaseSettings):
     
     block_ttl_risk: int = 3600
     
-    sentinel_jwt_secret: Optional[str] = None
-    sentinel_admin_key: Optional[str] = None
+    flowra_jwt_secret: Optional[str] = None
+    flowra_admin_key: Optional[str] = None
     
     openai_api_key: Optional[str] = None
 

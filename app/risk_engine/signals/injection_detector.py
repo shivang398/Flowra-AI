@@ -54,7 +54,7 @@ class PromptInjectionSignal(BaseSignal):
                 score += 0.4  # Each unique pattern adds to the score
         
         # 2. LLM Endpoint secondary check if regex suspects something or if configured
-        from app.config import settings
+        from app.core.config import settings
         if settings.openai_api_key:
             import openai
             try:
