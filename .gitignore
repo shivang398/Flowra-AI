@@ -1,0 +1,21 @@
+# Environments
+venv/
+env/
+.env
+.venv
+
+# Caches
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Data and Models
+model/*.pkl
+model/*.onnx
+
+# Logs
+logs/*.json
+*.log
+
+# OS specifics
+.DS_Store
