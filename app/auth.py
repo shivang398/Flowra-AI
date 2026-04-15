@@ -4,10 +4,12 @@ from fastapi import Depends, HTTPException
 from fastapi.security import HTTPBearer
 from jose import jwt, JWTError
 
+from app.config import settings
+import os
+
 # --- Configuration ---
 # Use a default for development ONLY if explicitly allowed, 
 # but here we follow the "Weakness 3" fix: No hardcoded demo secrets.
-SECRET_KEY = os.environ.get("SENTINEL_JWT_SECRET")
 ALGORITHM = os.environ.get("SENTINEL_JWT_ALGORITHM", "HS256")
 
 # Note: We don't raise RuntimeError here because it might break 
@@ -17,12 +19,12 @@ ALGORITHM = os.environ.get("SENTINEL_JWT_ALGORITHM", "HS256")
 security = HTTPBearer()
 
 def verify_token(credentials=Depends(security)):
-    if not SECRET_KEY:
+    if not settings.sentinel_jwt_secret:
         raise HTTPException(status_code=500, detail="JWT Configuration Error: SECRET_KEY not set")
     
     token = credentials.credentials
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        payload = jwt.decode(token, settings.sentinel_jwt_secret, algorithms=[ALGORITHM])
         
         # jose.jwt handles 'exp' automatically if present, but we can be explicit
         exp = payload.get("exp")

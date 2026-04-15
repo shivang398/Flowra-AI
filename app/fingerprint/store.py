@@ -43,14 +43,23 @@ class RedisFingerprintStore(BaseFingerprintStore):
 
     def get(self, ip: str) -> FingerprintBaseline:
         import json
+        import redis
         key = f"{self._prefix}{ip}"
-        data = self._client.get(key)
-        if data:
-            return FingerprintBaseline(**json.loads(data))
+        try:
+            data = self._client.get(key)
+            if data:
+                return FingerprintBaseline(**json.loads(data))
+        except redis.RedisError as e:
+            # Fallback smoothly on failure
+            pass
         return FingerprintBaseline()
 
     def set(self, ip: str, baseline: FingerprintBaseline) -> None:
         import json
+        import redis
         from dataclasses import asdict
         key = f"{self._prefix}{ip}"
-        self._client.set(key, json.dumps(asdict(baseline)))
+        try:
+            self._client.set(key, json.dumps(asdict(baseline)))
+        except redis.RedisError as e:
+            pass

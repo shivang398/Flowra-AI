@@ -18,6 +18,7 @@ os.makedirs("logs", exist_ok=True)
 
 
 def log_request(
+    ip: str,
     latency: float,
     risk_score: float,
     action: str,
@@ -27,29 +28,10 @@ def log_request(
     features: Optional[Dict[str, Any]] = None,
     reasoning: str = "N/A",
 ) -> None:
-    """Audit a single request and its security metadata to the log file.
-
-    Parameters
-    ----------
-    latency : float
-        End-to-end processing time in seconds.
-    risk_score : float
-        Aggregated risk score [0, 1].
-    action : str
-        Final decision: "allow" | "throttle" | "block".
-    anomaly_score : float | None
-        ML anomaly detection score.
-    deviation_score : float | None
-        Behavioral fingerprinting deviation score.
-    injection_score : float | None
-        Prompt injection detection score.
-    features : dict | None
-        Raw behavioral features (frequency, interval, etc.).
-    reasoning : str
-        Human-readable text explaining the Decision Engine's action.
-    """
+    """Audit a single request and its security metadata to the log file."""
     audit_entry = {
         "timestamp": time.time(),
+        "ip": ip,
         "latency_sec": round(latency, 4),
         "verdict": {
             "action": action,

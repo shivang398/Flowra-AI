@@ -47,6 +47,48 @@ class HeuristicDecisionEngine(BaseDecisionEngine):
     ) -> None:
         self._throttle = throttle_threshold
         self._block = block_threshold
+        self._redis = None
+
+    def set_redis(self, redis_client):
+        """Configure redis client and hydrate existing tuned thresholds."""
+        self._redis = redis_client
+        self.load_from_storage()
+
+    def load_from_storage(self):
+        if self._redis:
+            import redis
+            try:
+                t = self._redis.get("sentinel:thresholds:throttle")
+                b = self._redis.get("sentinel:thresholds:block")
+                if t: self._throttle = float(t)
+                if b: self._block = float(b)
+            except redis.RedisError:
+                pass
+
+    def adjust_thresholds(self, was_correct: bool, current_action: str) -> dict:
+        """Simple adaptive threshold adjustments based on admin feedback."""
+        lr = 0.05
+        
+        # False Positive: we blocked/throttled a safe user -> Threshold too low.
+        if not was_correct and current_action in ["block", "throttle", "rate_limit"]:
+            self._throttle = min(0.9, self._throttle + lr)
+            self._block = min(0.95, self._block + lr)
+            
+        # False Negative: we allowed an attacker through -> Threshold too high.
+        elif not was_correct and current_action == "allow":
+            self._throttle = max(0.1, self._throttle - lr)
+            self._block = max(0.2, self._block - lr)
+            
+        # Persist updated values across restarts
+        if self._redis:
+            import redis
+            try:
+                self._redis.set("sentinel:thresholds:throttle", str(self._throttle))
+                self._redis.set("sentinel:thresholds:block", str(self._block))
+            except redis.RedisError:
+                pass
+            
+        return {"throttle_threshold": round(self._throttle, 3), "block_threshold": round(self._block, 3)}
 
     def decide(self, agg_score: float, results: List[SignalResult]) -> Tuple[str, str]:
         # --- Extract key signals for easier rule matching ---

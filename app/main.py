@@ -30,21 +30,23 @@ app.add_middleware(
 )
 
 import os
+from app.config import settings
 from app.feature_extractor.store import RedisStore
 from app.fingerprint.store import RedisFingerprintStore
 from app.rate_limiter import rate_enforcer
 from app.appeal import whitelist_manager, appeal_store, block_registry, AppealRequest
+from fastapi.responses import HTMLResponse
+from fastapi.templating import Jinja2Templates
 
 # --- Shared engines (swap InMemoryStores → RedisStores for distributed) ---
-USE_REDIS = os.environ.get("USE_REDIS", "false").lower() == "true"
-REDIS_URL = os.environ.get("REDIS_URL", "redis://localhost:6379/0")
+templates = Jinja2Templates(directory="app/templates")
 
-if USE_REDIS:
+if settings.use_redis:
     import redis
-    r = redis.Redis.from_url(REDIS_URL, decode_responses=True)
-    logging.info(f"Using Redis stores at {REDIS_URL}")
-    feature_store = RedisStore(redis_url=REDIS_URL)
-    fingerprint_store = RedisFingerprintStore(redis_url=REDIS_URL)
+    r = redis.Redis.from_url(settings.redis_url, decode_responses=True)
+    logging.info(f"Using Redis stores at {settings.redis_url}")
+    feature_store = RedisStore(redis_url=settings.redis_url)
+    fingerprint_store = RedisFingerprintStore(redis_url=settings.redis_url)
     # Re-initialize appeal instances with redis client
     whitelist_manager._redis = r
     appeal_store._redis = r
@@ -56,7 +58,9 @@ else:
 
 feature_extractor = FeatureExtractor(store=feature_store, window_sec=10.0)
 fingerprint_engine = FingerprintEngine(store=fingerprint_store, min_samples=5)
-decision_engine = HeuristicDecisionEngine(throttle_threshold=0.3, block_threshold=0.7)
+decision_engine = HeuristicDecisionEngine(throttle_threshold=settings.throttle_threshold, block_threshold=settings.block_threshold)
+if settings.use_redis:
+    decision_engine.set_redis(r)
 
 # --- ML Anomaly detector ---
 anomaly_detector = AnomalyDetector()
@@ -73,7 +77,7 @@ risk_engine = RiskEngine(
 )
 risk_engine.register_signal(AnomalySignal(anomaly_detector))
 risk_engine.register_signal(FingerprintSignal(weight=1.2))
-risk_engine.register_signal(PromptInjectionSignal(weight=2.0))
+risk_engine.register_signal(PromptInjectionSignal(weight=settings.injection_weight))
 
 
 class InputData(BaseModel):
@@ -82,8 +86,7 @@ class InputData(BaseModel):
 
 @app.on_event("startup")
 async def startup_event():
-    from app.auth import SECRET_KEY
-    if not SECRET_KEY:
+    if not settings.sentinel_jwt_secret:
         logging.critical("CRITICAL: SENTINEL_JWT_SECRET is not set. Exiting.")
         raise RuntimeError("SENTINEL_JWT_SECRET is not set")
     logging.info("SentinelAI security configuration validated.")
@@ -95,15 +98,15 @@ def root():
 @app.get("/token")
 def generate_test_token():
     """Generates a test token ONLY for dashboard demo purposes."""
-    from app.auth import SECRET_KEY, ALGORITHM
+    from app.auth import ALGORITHM
     from jose import jwt
     import time
     
-    if not SECRET_KEY:
+    if not settings.sentinel_jwt_secret:
          raise HTTPException(status_code=500, detail="JWT SECRET_KEY not configured")
          
     payload = {"user": "demo_user", "exp": int(time.time()) + 3600}
-    token = jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
+    token = jwt.encode(payload, settings.sentinel_jwt_secret, algorithm=ALGORITHM)
     return {"access_token": token, "token_type": "bearer"}
 
 
@@ -157,10 +160,11 @@ async def basic_predict(
 
     if action == "block":
         # Record the block
-        block_registry.block(ip, verdict.reasoning, ttl_sec=int(os.environ.get("BLOCK_TTL_RISK", 3600)))
+        block_registry.block(ip, verdict.reasoning, ttl_sec=settings.block_ttl_risk)
         
         # Log before raising
         log_request(
+            ip=ip,
             latency=time.time() - start,
             risk_score=verdict.risk_score,
             action=action,
@@ -184,6 +188,7 @@ async def basic_predict(
 
     # 4. Logging
     log_request(
+        ip=ip,
         latency=latency,
         risk_score=verdict.risk_score,
         action=action,
@@ -253,11 +258,12 @@ async def secure_predict_pipeline(
 
     if action == "block":
         # Record the block
-        block_registry.block(ip, verdict.reasoning, ttl_sec=int(os.environ.get("BLOCK_TTL_RISK", 3600)))
+        block_registry.block(ip, verdict.reasoning, ttl_sec=settings.block_ttl_risk)
         
         # Log before raising if possible, or handle in middleware. 
         # For now, log and then raise.
         log_request(
+            ip=ip,
             latency=time.time() - start,
             risk_score=verdict.risk_score,
             action=action,
@@ -292,6 +298,7 @@ async def secure_predict_pipeline(
 
     # 6. Logging
     log_request(
+        ip=ip,
         latency=latency,
         risk_score=verdict.risk_score,
         action=action,
@@ -315,7 +322,7 @@ from fastapi import Header
 import uuid
 
 def verify_admin(x_admin_key: str = Header(None)):
-    admin_key = os.environ.get("SENTINEL_ADMIN_KEY")
+    admin_key = settings.sentinel_admin_key
     if not admin_key or x_admin_key != admin_key:
         raise HTTPException(status_code=401, detail="Invalid admin key")
 
@@ -355,3 +362,46 @@ async def add_to_whitelist(ip: str):
 async def remove_from_whitelist(ip: str):
     whitelist_manager.remove(ip)
     return {"message": f"IP {ip} removed from whitelist."}
+
+class FeedbackRequest(BaseModel):
+    ip: str
+    verdict: str
+    was_correct: bool
+
+@app.post("/admin/feedback", dependencies=[Depends(verify_admin)])
+async def submit_feedback(feedback: FeedbackRequest):
+    """Adaptive feedback loop to adjust Risk Engine thresholds in real-time."""
+    new_thresholds = decision_engine.adjust_thresholds(
+        was_correct=feedback.was_correct, 
+        current_action=feedback.verdict
+    )
+    
+    # If the system got it wrong and blocked a safe IP, let's proactively whitelist them
+    if not feedback.was_correct and feedback.verdict in ["block", "throttle", "rate_limit"]:
+        whitelist_manager.add(feedback.ip)
+        
+    return {
+        "message": "Feedback integrated. Thresholds updated.",
+        "new_thresholds": new_thresholds
+    }
+
+@app.get("/dashboard", response_class=HTMLResponse)
+async def get_dashboard(request: Request):
+    return templates.TemplateResponse("dashboard.html", {"request": request})
+
+@app.get("/api/logs")
+async def get_logs():
+    """Retrieve structured logs for the dashboard."""
+    import json
+    from app.logger import LOG_FILE
+    logs = []
+    try:
+        with open(LOG_FILE, "r") as f:
+            for line in f:
+                if line.strip():
+                    logs.append(json.loads(line))
+    except FileNotFoundError:
+        pass
+    
+    # Return last 500 for performance
+    return {"logs": logs[-500:]}

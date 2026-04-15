@@ -4,5 +4,10 @@ scikit-learn
 joblib
 numpy
 pydantic
+pydantic-settings
 python-jose
 redis
+pytest
+httpx
+jinja2
+openai

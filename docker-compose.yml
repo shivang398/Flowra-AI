@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  sentinel-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - USE_REDIS=true
+      - REDIS_URL=redis://redis:6379/0
+      - SENTINEL_JWT_SECRET=supersecret  # Change this in production
+      - SENTINEL_ADMIN_KEY=admin123
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+    depends_on:
+      - redis
+    volumes:
+      - ./model:/app/model
+
+  redis:
+    image: redis:6-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+volumes:
+  redis_data:
