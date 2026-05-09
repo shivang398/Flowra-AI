@@ -23,7 +23,7 @@ def auth_headers(auth_token):
 def test_health_check():
     response = client.get("/")
     assert response.status_code == 200
-    assert "FlowraAI running" in response.json()["message"]
+    assert "Flowra AI running" in response.json()["message"]
 
 def test_no_auth_rejected():
     response = client.post("/secure-predict", json={"data": [1.0, 2.0, 3.0, 4.0]})

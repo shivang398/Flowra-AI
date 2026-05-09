@@ -14,7 +14,7 @@ class Settings(BaseSettings):
     flowra_jwt_secret: Optional[str] = None
     flowra_admin_key: Optional[str] = None
     
-    openai_api_key: Optional[str] = None
+    groq_api_key: Optional[str] = None
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 

@@ -89,11 +89,11 @@ async def startup_event():
     if not settings.flowra_jwt_secret:
         logging.critical("CRITICAL: FLOWRA_JWT_SECRET is not set. Exiting.")
         raise RuntimeError("FLOWRA_JWT_SECRET is not set")
-    logging.info("FlowraAI security configuration validated.")
+    logging.info("Flowra AI security configuration validated.")
 
 @app.get("/")
 def root():
-    return {"message": "FlowraAI running 🚀"}
+    return {"message": "Flowra AI running 🚀"}
 
 @app.get("/token")
 def generate_test_token():
@@ -278,16 +278,6 @@ async def secure_predict_pipeline(
             detail=f"Access Denied: {verdict.reasoning}. You can submit an appeal at /appeal."
         )
 
-    # 4. Model Inference (if not blocked)
-    # SAFETY CHECK: If prompt injection detected or data is not floats, we return 400 or skip inference
-    try:
-        result = predict(input.data)
-    except (ValueError, TypeError) as e:
-        # If it was a deliberate prompt injection test, we return 200 but maybe with a warning result
-        # Or a 400 if it's truly bad data.
-        # Given this is a security pipeline, we'll return 400 for malformed data
-        raise HTTPException(status_code=400, detail=f"Invalid data for model inference: {str(e)}")
-
     latency = time.time() - start
     
     # 5. Signal extraction for flat response
@@ -296,7 +286,7 @@ async def secure_predict_pipeline(
     deviation_score = signal_map.get("behavioral_fingerprint", 0.0)
     injection_score = signal_map.get("prompt_injection", 0.0)
 
-    # 6. Logging
+    # 6. Logging (Pre-inference logging to capture signals even if inference fails)
     log_request(
         ip=ip,
         latency=latency,
@@ -308,6 +298,12 @@ async def secure_predict_pipeline(
         features=verdict.features,
         reasoning=verdict.reasoning
     )
+
+    # 7. Model Inference (if not blocked)
+    try:
+        result = predict(input.data)
+    except (ValueError, TypeError) as e:
+        raise HTTPException(status_code=400, detail=f"Invalid data for model inference: {str(e)}")
 
     return {
         "prediction": result,

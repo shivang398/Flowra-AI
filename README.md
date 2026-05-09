@@ -1,6 +1,6 @@
 # 🛡️ Flowra AI — Adaptive Security & Alignment Layer for AI Systems
 
-Flowra AI (formerly Flowra AI) is a real-time, behavior-aware security and control layer for AI inference systems. It combines unsupervised anomaly detection, behavioral fingerprinting, natural language prompt injection checks, and a live reinforcement-learning feedback loop to protect AI APIs from abuse while maintaining performance and efficiency.
+Flowra AI (formerly Sentinel AI) is a real-time, behavior-aware security and control layer for AI inference systems. It combines unsupervised anomaly detection, behavioral fingerprinting, natural language prompt injection checks, and a live reinforcement-learning feedback loop to protect AI APIs from abuse while maintaining performance and efficiency.
 
 ---
 
@@ -37,7 +37,7 @@ Builds mathematical, user-specific profiles mapping exact request speeds and pay
 Trains a synthetic `IsolationForest` (unsupervised ML) parameter space over expected traffic distributions to flag entirely unheard-of traffic patterns instantly.
 
 ### 3️⃣ LLM Prompt Injection Detection 🛡️
-Utilizes rigorous Regex filtering coupled inherently with a zero-temperature **OpenAI API** semantic check. Safe from outages due to native architectural uncertainty fallbacks (`LLM_API_OFFLINE_UNCERTAIN`).
+Utilizes rigorous Regex filtering coupled inherently with a zero-temperature **Groq API** semantic check (using Llama 3). Safe from outages due to native architectural uncertainty fallbacks (`LLM_API_OFFLINE_UNCERTAIN`).
 
 ### 4️⃣ The Bayesian Decision Engine 🚦
 Aggregates all four distinct threat vectors contextually, rather than rigidly. Maps the final security confidence score to a live tuning threshold yielding:
@@ -77,7 +77,7 @@ cd Flowra-AI
 
 # Set your environmental keys securely
 cp .env.example .env
-# Edit .env with your OPENAI_API_KEY and a FLOWRA_AI_ADMIN_KEY
+# Edit .env with your GROQ_API_KEY and a FLOWRA_ADMIN_KEY
 
 # Spin up the infrastructure
 docker-compose up -d

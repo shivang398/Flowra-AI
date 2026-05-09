@@ -10,4 +10,4 @@ redis
 pytest
 httpx
 jinja2
-openai
+groq

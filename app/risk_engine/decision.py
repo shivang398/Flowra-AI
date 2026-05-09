@@ -1,4 +1,4 @@
-"""Intelligent Decision Engine for FlowraAI.
+"""Intelligent Decision Engine for Flowra AI.
 
 Decouples from simple threshold-based scoring to provide a more
 sophisticated and explainable risk-action matrix.
